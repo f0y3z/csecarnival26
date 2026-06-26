@@ -1,0 +1,16 @@
+[Unit]
+Description=QueueStorm Investigator API
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/csecarnival26/backend
+Environment=DJANGO_SECRET_KEY=replace-with-any-long-random-string
+Environment=DJANGO_DEBUG=false
+Environment=DJANGO_ALLOWED_HOSTS=YOUR_EC2_PUBLIC_IP,localhost,127.0.0.1
+ExecStart=/home/ubuntu/csecarnival26/.venv/bin/gunicorn support_copilot.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 30
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

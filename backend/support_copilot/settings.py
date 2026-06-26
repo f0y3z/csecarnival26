@@ -26,8 +26,12 @@ SECRET_KEY = os.environ.get(
     "django-insecure-dev-only-change-before-deployment",
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Keep DEBUG configurable so the same code can run locally and on EC2.
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -125,3 +129,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
