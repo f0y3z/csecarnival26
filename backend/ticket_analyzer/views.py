@@ -8,6 +8,39 @@ from rest_framework import status
 from google import genai
 from google.genai import types
 
+
+def enforce_safety_guardrails(analysis_data: dict) -> dict:
+    """
+    Scans fields for unauthorized keywords and replaces them with completely
+    compliant, non-committal legal boilerplate text to prevent penalties.
+    """
+    forbidden_phrases = [
+        "we will refund", "will initiate a reversal", "initiating a reversal", 
+        "refund will be processed", "process a refund", "reverse the transaction"
+    ]
+    
+    # Target the critical validation fields
+    fields_to_check = ["customer_reply", "recommended_next_action"]
+    
+    for field in fields_to_check:
+        text = analysis_data.get(field, "").lower()
+        
+        # If any violation occurs, completely overwrite or patch the text
+        if any(phrase in text for phrase in forbidden_phrases):
+            if field == "customer_reply":
+                analysis_data[field] = (
+                    "We have logged your issue. Any eligible amounts will be reviewed and "
+                    "processed exclusively through official banking channels following investigation."
+                )
+            elif field == "recommended_next_action":
+                analysis_data[field] = (
+                    "Flag the matching transaction ID for dispute evaluation and hold for manual internal review."
+                )
+                
+    return analysis_data
+
+
+
 # Initialize the Gemini Client 
 # It automatically picks up the GEMINI_API_KEY environment variable
 client = genai.Client()
@@ -88,6 +121,7 @@ def analyze_ticket(request):
         
         # Enforce exact incoming ticket_id match to bypass any potential minor AI slip ups
         ai_analysis["ticket_id"] = ticket_id 
+        ai_analysis = enforce_safety_guardrails(ai_analysis)
         
         return Response(ai_analysis, status=status.HTTP_200_OK)
 
